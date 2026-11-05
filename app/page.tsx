@@ -19,9 +19,14 @@ export default function Home() {
       return
     }
 
+    const stripeLink = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK
+    if (!stripeLink) {
+      setError('Payment not configured yet. Email hello@3ftech.co.uk to get a manual roast.')
+      return
+    }
     setLoading(true)
     localStorage.setItem('roast_pending', JSON.stringify({ url: cleanUrl, email }))
-    window.location.href = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK!
+    window.location.href = stripeLink
   }
 
   return (
