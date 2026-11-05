@@ -1,7 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 
-const client = new Anthropic()
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
 export async function POST(req: NextRequest) {
   const { url } = await req.json()
@@ -14,7 +15,6 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(10000),
     })
     const raw = await res.text()
-    // Trim to first 15,000 chars - enough for Claude to work with
     html = raw.slice(0, 15000)
   } catch {
     html = '(Could not fetch the website HTML - analyzing from URL alone)'
@@ -33,31 +33,31 @@ Return a JSON object with this exact structure - no markdown, no explanation, ju
   "sections": [
     {
       "title": "First Impression",
-      "rating": "poor" | "average" | "good",
+      "rating": "poor",
       "finding": "specific finding - name actual problems, not generic observations",
       "fix": "specific actionable fix - not generic advice"
     },
     {
       "title": "Headline & Copy",
-      "rating": "poor" | "average" | "good",
+      "rating": "poor",
       "finding": "...",
       "fix": "..."
     },
     {
       "title": "Call to Action",
-      "rating": "poor" | "average" | "good",
+      "rating": "average",
       "finding": "...",
       "fix": "..."
     },
     {
       "title": "Trust Signals",
-      "rating": "poor" | "average" | "good",
+      "rating": "poor",
       "finding": "...",
       "fix": "..."
     },
     {
       "title": "SEO Basics",
-      "rating": "poor" | "average" | "good",
+      "rating": "average",
       "finding": "...",
       "fix": "..."
     }
@@ -69,29 +69,21 @@ Return a JSON object with this exact structure - no markdown, no explanation, ju
   ]
 }
 
-Rules:
-- Be specific. If the headline is weak, quote it and say why.
-- Do not use phrases like "consider", "you might want to", "it would be beneficial". Say what is wrong and what to do.
-- Every fix must be something they can action this week.
-- Rank top3fixes by revenue impact, not ease of implementation.`
+Rating values must be exactly: "poor", "average", or "good".
+Be specific. If the headline is weak, quote it and say why.
+Do not use phrases like "consider" or "you might want to". Say what is wrong and what to do.
+Every fix must be something they can action this week.
+Rank top3fixes by revenue impact.`
 
-  const message = await client.messages.create({
-    model: 'claude-opus-4-5',
-    max_tokens: 1500,
-    messages: [{ role: 'user', content: prompt }],
-  })
-
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const result = await model.generateContent(prompt)
+  const text = result.response.text()
 
   try {
-    const json = JSON.parse(text)
-    return NextResponse.json(json)
+    const clean = text.replace(/```json\n?|\n?```/g, '').trim()
+    return NextResponse.json(JSON.parse(clean))
   } catch {
-    // Claude returned non-JSON - extract JSON from the response
     const match = text.match(/\{[\s\S]*\}/)
-    if (match) {
-      return NextResponse.json(JSON.parse(match[0]))
-    }
-    return NextResponse.json({ error: 'Parse error', raw: text }, { status: 500 })
+    if (match) return NextResponse.json(JSON.parse(match[0]))
+    return NextResponse.json({ error: 'Parse error' }, { status: 500 })
   }
 }
