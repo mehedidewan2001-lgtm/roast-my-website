@@ -1,69 +1,112 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from 'react'
 
 export default function Home() {
+  const [url, setUrl] = useState('')
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+
+    let cleanUrl = url.trim()
+    if (!cleanUrl.startsWith('http')) cleanUrl = 'https://' + cleanUrl
+    if (!cleanUrl || !email) {
+      setError('Enter both your website URL and email.')
+      return
+    }
+
+    setLoading(true)
+    localStorage.setItem('roast_pending', JSON.stringify({ url: cleanUrl, email }))
+    window.location.href = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK!
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem 1rem', maxWidth: '640px', margin: '0 auto' }}>
+
+      <div style={{ marginBottom: '3rem' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+          Brutal Website Audit
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <h1 style={{ fontSize: 'clamp(2.2rem, 6vw, 3.5rem)', fontWeight: 900, lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+          Your website is<br />
+          <span style={{ color: 'var(--accent)' }}>probably losing</span><br />
+          you customers.
+        </h1>
+
+        <p style={{ fontSize: '1.1rem', color: 'var(--muted)', lineHeight: 1.7, maxWidth: '480px' }}>
+          We read it, we roast it, we tell you exactly what&apos;s broken.
+          No agency speak. No generic advice. Just the truth — delivered in under 60 seconds.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+            Your website URL
+          </label>
+          <input
+            type="text"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            placeholder="yourwebsite.com"
+            required
+            style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.9rem 1rem', fontSize: '1rem', color: 'var(--text)', outline: 'none' }}
+          />
         </div>
-      </main>
-    </div>
-  );
+
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+            Your email
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@yourcompany.com"
+            required
+            style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.9rem 1rem', fontSize: '1rem', color: 'var(--text)', outline: 'none' }}
+          />
+        </div>
+
+        {error && (
+          <p style={{ color: 'var(--accent)', fontSize: '0.9rem' }}>{error}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '1rem', fontSize: '1.05rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: '0.5rem', letterSpacing: '-0.01em' }}
+        >
+          {loading ? 'Redirecting...' : 'Roast My Website — £9'}
+        </button>
+
+        <p style={{ fontSize: '0.8rem', color: 'var(--muted)', textAlign: 'center', lineHeight: 1.6 }}>
+          One-time payment. Results in under 60 seconds.<br />
+          Powered by AI trained on thousands of high-converting websites.
+        </p>
+      </form>
+
+      <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+        {[
+          { label: 'Copy & messaging', desc: 'Is it clear what you do and who it\'s for?' },
+          { label: 'Conversion leaks', desc: 'Where are visitors dropping off and why?' },
+          { label: 'The 3 fastest fixes', desc: 'Ranked by revenue impact, not effort.' },
+        ].map(item => (
+          <div key={item.label}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.4rem' }}>{item.label}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: '3rem', fontSize: '0.75rem', color: '#444', textAlign: 'center' }}>
+        Built by <a href="https://3ftech.co.uk" style={{ color: 'var(--muted)', textDecoration: 'none' }}>3FTECH</a>
+      </div>
+    </main>
+  )
 }
