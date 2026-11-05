@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 const genAI = new GoogleGenerativeAI((process.env.GEMINI_API_KEY || process.env.Gemini_api_key)!)
 const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' })
 
